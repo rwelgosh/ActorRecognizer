@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Actor Recognizer",
+  "version": "1.0",
+  "description": "An extension to ",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "permissions": ["tabs", "storage", "declarativeContent"],
+  "host_permissions": [ "https://*.netflix.com/" ]
+}
