@@ -1,5 +1,5 @@
 chrome.runtime.onInstalled.addListener(() => {
-    chrome.storage.local.set({ enabled: false });
+    chrome.storage.local.set({ enabled: true });
   
     chrome.declarativeContent.onPageChanged.removeRules(undefined, () => {
       chrome.declarativeContent.onPageChanged.addRules([
@@ -13,33 +13,24 @@ chrome.runtime.onInstalled.addListener(() => {
         }
       ]);
     });
-  });
-  
-  chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.status === "complete" && tab.active) {
-      // When the tab is updated, load the vPos, fSize, and fColor
-      // Excecute script.js
+});
 
-      // TODO
-      // When the tab is updated check to see if they want to do the thing
-      // If it is, run script.js
-      chrome.storage.local.get(["enabled"], data => {
-        chrome.tabs.executeScript(
-          tabId,
-          {
-            file: "script.js"
-          },
-          () => {
-            const error = chrome.runtime.lastError;
-            if (error) "Error. Tab ID: " + tab.id + ": " + JSON.stringify(error);
-  
-            chrome.tabs.sendMessage(tabId, {
-              vPos: data.vPos,
-              fSize: data.fSize,
-              fColor: data.fColor
-            });
-          }
+chrome.tabs.onUpdated.addListener((tabID, changeInfo, tab) => {
+    if (changeInfo.status === "complete" && tab.active) {
+        console.log("working");
+        chrome.scripting.executeScript(
+            {
+                target: {tabId : tab.id},
+                files: ["script.js"]
+            }
         );
-      });
     }
-  });
+});
+
+// chrome.action.onClicked.addListener((tab) => {
+//     console.log("Ok you clicked but its not executing");
+//     chrome.scripting.executeScript({
+//       target: {tabId: tab.id},
+//       files: ['script.js']
+//     });
+//   });
