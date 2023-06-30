@@ -9,6 +9,6 @@
   "action": {
     "default_popup": "popup.html"
   },
-  "permissions": ["activeTab", "scripting","tabs", "storage", "declarativeContent"],
+  "permissions": ["activeTab", "scripting", "tabs", "storage", "declarativeContent"],
   "host_permissions": [ "https://*.netflix.com/" ]
 }
