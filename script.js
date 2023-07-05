@@ -13,14 +13,18 @@ function addBox() {
 
 // addBox();
 
+let isVideoPaused;
+
 // detect video play/pause
 const playPauseObserver = new MutationObserver(mutationList => {
     mutationList.forEach(mutation => {
         mutation.addedNodes.forEach(addedNode => {
             if (addedNode.classList.contains('playback-notification--play')) {
+                isVideoPaused = false;
                 console.log('played');
             }
             else if (addedNode.classList.contains('playback-notification--pause')) {
+                isVideoPaused = true;
                 console.log('paused');
             }
         });
@@ -29,7 +33,7 @@ const playPauseObserver = new MutationObserver(mutationList => {
 
 playPauseObserver.observe(document.getElementsByClassName('watch-video')[0], { subtree: false, childList: true });
 
-// detect pause overlay added
+// detect and hide pause overlay
 const pauseOverlayObserver = new MutationObserver(mutationList => {
     mutationList.forEach(mutation => {
         mutation.addedNodes.forEach(addedNode => {
@@ -42,3 +46,17 @@ const pauseOverlayObserver = new MutationObserver(mutationList => {
 });
 
 pauseOverlayObserver.observe(document.getElementsByClassName('watch-video')[0], { subtree: true, childList: true });
+
+// detect and hide age advisor when paused
+const ageAdvisorObserver = new MutationObserver(mutationList => {
+    mutationList.forEach(mutation => {
+        mutation.addedNodes.forEach(addedNode => {
+            if (isVideoPaused && addedNode.classList.contains('advisory')) {
+                addedNode.style.display = 'none';
+                console.log('age advisor detected and hidden');
+            }
+        });
+    });
+});
+
+ageAdvisorObserver.observe(document.getElementsByClassName('watch-video')[0], { subtree: true, childList: true });
