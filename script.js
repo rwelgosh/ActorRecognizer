@@ -11,4 +11,34 @@ function addBox() {
     videoContainer.appendChild(box);
 }
 
-addBox();
+// addBox();
+
+// detect video play/pause
+const playPauseObserver = new MutationObserver(mutationList => {
+    mutationList.forEach(mutation => {
+        mutation.addedNodes.forEach(addedNode => {
+            if (addedNode.classList.contains('playback-notification--play')) {
+                console.log('played');
+            }
+            else if (addedNode.classList.contains('playback-notification--pause')) {
+                console.log('paused');
+            }
+        });
+    });
+});
+
+playPauseObserver.observe(document.getElementsByClassName('watch-video')[0], { subtree: false, childList: true });
+
+// detect pause overlay added
+const pauseOverlayObserver = new MutationObserver(mutationList => {
+    mutationList.forEach(mutation => {
+        mutation.addedNodes.forEach(addedNode => {
+            if (addedNode.classList.contains('watch-video--evidence-overlay-container')) {
+                addedNode.style.display = 'none';
+                console.log('pause overlay detected and hidden');
+            }
+        });
+    });
+});
+
+pauseOverlayObserver.observe(document.getElementsByClassName('watch-video')[0], { subtree: true, childList: true });
