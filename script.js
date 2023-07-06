@@ -7,6 +7,8 @@ function addBox() {
     box.style.height = '200px';
     box.style.backgroundColor = 'red';
     box.style.position = 'absolute';
+    box.style.top = '50%'
+    box.style.left = '50%'
     box.style.zIndex = '100';
     videoContainer.appendChild(box);
 }
