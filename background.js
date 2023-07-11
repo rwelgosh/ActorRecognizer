@@ -15,22 +15,19 @@ chrome.runtime.onInstalled.addListener(() => {
     });
 });
 
-chrome.tabs.onUpdated.addListener((tabID, changeInfo, tab) => {
-    if (changeInfo.status === "complete" && tab.active) {
-        console.log("working");
-        chrome.scripting.executeScript(
-            {
-                target: {tabId : tab.id},
-                files: ["script.js"]
-            }
-        );
-    }
-});
-
-// chrome.action.onClicked.addListener((tab) => {
-//     console.log("Ok you clicked but its not executing");
-//     chrome.scripting.executeScript({
-//       target: {tabId: tab.id},
-//       files: ['script.js']
-//     });
-//   });
+chrome.runtime.onMessage.addListener(
+  function(request, sender, sendResponse) {
+      if( request.status === "get data" ) {
+          console.log("getting data");
+          chrome.tabs.captureVisibleTab(
+              null,
+              {},
+              function(dataUrl)
+              {
+                  sendResponse({message: "WORKED", data: dataUrl})
+              }
+          );
+          return true;
+      }
+  }
+);

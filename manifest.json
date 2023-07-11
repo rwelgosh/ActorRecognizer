@@ -10,5 +10,17 @@
     "default_popup": "popup.html"
   },
   "permissions": ["activeTab", "scripting", "tabs", "storage", "declarativeContent"],
-  "host_permissions": [ "https://*.netflix.com/" ]
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "inject_script.js"
+      ],
+      "run_at": "document_end"
+    }
+  ],
+  "host_permissions": [ "<all_urls>" ]
 }
