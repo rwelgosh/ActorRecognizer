@@ -1,5 +1,7 @@
 let isVideoPaused;
 
+console.log('test');
+
 // detect video play/pause
 const playPauseObserver = new MutationObserver(mutationList => {
     mutationList.forEach(mutation => {

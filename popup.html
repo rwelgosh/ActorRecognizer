@@ -1,19 +1,32 @@
-<!-- Create html for actual extension here -->
-
 <!DOCTYPE html>
 <html>
-<head>
-  <script src="aws-cognito-sdk.min.js"></script>
-  <script src="amazon-cognito-identity.min.js"></script>
-  <script src="./aws-sdk-2.1413.0-all.js"></script>
-  <meta charset="UTF-8">
-  <title>Rekognition</title>
-</head>
-
-<body>
-  <H1>Actor Recognition</H1>
-  <button>Click here</button>
-</body>
-<script src="popup.js"></script>
+  <head>
+    <meta charset="UTF-8">
+    <title>Actordentify</title>
+    <link rel="stylesheet" href="popup.css">
+    <!-- Font import -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">    
+    <script src="aws-cognito-sdk.min.js"></script>
+    <script src="amazon-cognito-identity.min.js"></script>
+    <script src="./aws-sdk-2.1413.0-all.js"></script>
+  </head>
+  <body>
+    <div id="header">
+      <img src="header-icon.svg" alt="Actordentify logo">
+      <h1>Actordentify</h1>
+    </div>
+    <p>
+      Pause the video and click “identify” to learn more about the actors currently on screen
+    </p>
+    <div id="button-container">
+      <button>Identify</button>
+    </div>
+    <footer>
+      Image recognition provided by AWS. Actor, movie, and TV show data provided by TMDB.
+    </footer>
+  </body>
+  <script src="popup.js"></script>
 </html>
 
