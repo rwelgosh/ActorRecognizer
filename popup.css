@@ -65,9 +65,22 @@ button {
     align-items: center;
     gap: 10px;
     border-radius: 8px;
+    cursor: pointer;
+    /* appearance */
     background: #E6041A;
     box-shadow: 0px 0px 1px 0px rgba(255, 255, 255, 0.80) inset;
-    cursor: pointer;
+}
+
+button:hover {
+    /* appearance */
+    background: #E31E31;
+    box-shadow: 0px 0px 1.5px 0px rgba(255, 255, 255, 0.80) inset;
+}
+
+button:active {
+    /* appearance */
+    background: #E31E31;
+    box-shadow: 0px 0px 1px 0px rgba(255, 255, 255, 0.80) inset, 0px 3px 3px 0px rgba(0, 0, 0, 0.30) inset;
 }
 
 footer {

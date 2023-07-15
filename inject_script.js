@@ -16,7 +16,7 @@ const playPauseObserver = new MutationObserver(mutationList => {
                 // hide caption text when paused
                 const captionText = document.getElementsByClassName('player-timedtext')[0];
                 captionText.style.display = 'none';
-                console.log('hid caption text');
+                // console.log('hid caption text');
             }
         });
     });
@@ -54,18 +54,31 @@ ageAdvisorObserver.observe(document.getElementsByClassName('watch-video')[0], { 
 
 
 
-
-
-
-// what does this do????
+// get the actor data
 chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
-        if( request.status === "actor data" ) {
-            var actor_data = request.data
-            console.log(actor_data);
-
+        if (request.status === "actor data") {
+            const actorData = request.data;
+            const boundingBox = actorData.CelebrityFaces[0].Face.BoundingBox
+            console.log(boundingBox);
+            addBox(boundingBox.Width, boundingBox.Height, boundingBox.Left, boundingBox.Top);
             sendResponse({message:"received", paused:isVideoPaused});
             return true;
         }
     }
 );
+
+function addBox(width, height, left, top) {
+    const videoContainer = document.getElementsByClassName('watch-video')[0];
+    const box = document.createElement('div');
+    box.style.width = `${width * window.innerWidth}px`;
+    box.style.height = `${height * window.innerHeight}px`;
+    box.style.left = `${left * window.innerWidth}px`;
+    box.style.top = `${top * window.innerHeight}px`;
+    box.style.backgroundColor = 'red';
+    box.style.opacity = '0.5';
+    box.style.position = 'absolute';
+    box.style.zIndex = '100';
+    videoContainer.appendChild(box);
+}
+
