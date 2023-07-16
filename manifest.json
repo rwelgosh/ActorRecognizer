@@ -19,6 +19,9 @@
       "js": [
         "inject_script.js"
       ],
+      "css": [
+        "box.css"
+      ],
       "run_at": "document_end"
     }
   ],
