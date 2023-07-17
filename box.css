@@ -78,6 +78,88 @@ h1, h2 {
 h1 { color: rgba(255, 255, 255, 0.90) !important; }
 h2 { color: rgba(255, 255, 255, 0.60) !important; }
 
+.card-bio { 
+    position: relative; 
+    min-height: 80px;
+}
+
+p {
+    width: 300px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    /* font-family: 'Inter', sans-serif; */
+    font-size: 13px !important;
+    font-style: normal !important;
+    font-weight: 400 !important;
+    line-height: 16px !important;
+    color: rgba(255, 255, 255, 0.90) !important;
+}
+
+.small-text {
+    padding: 0 !important;
+    margin: 0 !important;
+    /* font-family: 'Inter', sans-serif; */
+    font-size: 12px !important;
+    font-style: normal !important;
+    font-weight: 400 !important;
+    line-height: normal !important;
+}
+
+.read-more {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    color: rgba(255, 255, 255, 0.60);
+}
+
+.other-productions {
+    color: rgba(255, 255, 255, 0.60);
+}
+
+.productions-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.production {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+.production-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+}
+
+.production-image-container {
+    width: 66px;
+    height: 101px;
+    border-radius: 4px;
+    overflow: hidden;
+    background-size: cover;
+    background-color: rgba(255, 255, 255, 0.60);
+    box-shadow: 0px 0px 3px 0px rgba(0, 0, 0, 0.15);
+}
+
+.production-title,
+.production-year {
+    width: 66px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.production-title { color: rgba(255, 255, 255, 0.90); }
+.production-year { color: rgba(255, 255, 255, 0.60); }
+
 
 
 
