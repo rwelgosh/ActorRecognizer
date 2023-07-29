@@ -3,10 +3,13 @@ const api_base_url = 'https://api.themoviedb.org/3/';
 const profile_image_base_url = 'https://image.tmdb.org/t/p/w185';
 const poster_image_base_url = 'https://image.tmdb.org/t/p/w342';
 
+// hard coded names to change
+const actorNameReplacements = {
+    'Gabriel Delmotte': 'Gabriel Macht'
+};
+
 let isVideoPaused;
 let thisProductionTitle;
-
-console.log('test');
 
 // detect video play/pause
 const playPauseObserver = new MutationObserver(mutationList => {
@@ -65,7 +68,10 @@ chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
         if (request.status === "actor data") {
             const actorData = request.data;
-            const actorName = actorData.CelebrityFaces[0].Name;
+            let actorName = actorData.CelebrityFaces[0].Name;
+            if (actorName in actorNameReplacements) {
+                actorName = actorNameReplacements[actorName];
+            }
             const formattedName = actorName.replaceAll(' ', '%20');
 
             (async () => {
