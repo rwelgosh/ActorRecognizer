@@ -1,6 +1,5 @@
 const api_key = "4e030ef294d25cb08d568e060ace3699";
 const api_base_url = 'https://api.themoviedb.org/3/';
-const image_base_url = 'https://image.tmdb.org/t/p/original';
 const profile_image_base_url = 'https://image.tmdb.org/t/p/w185';
 const poster_image_base_url = 'https://image.tmdb.org/t/p/w342';
 
@@ -84,10 +83,11 @@ chrome.runtime.onMessage.addListener(
                 console.log(actorBio);
 
                 const topFiveProductions = await getTopFiveProductions(actorId);
-                console.log(topFiveProductions);
 
                 const displayProductions = removeThisProduction(topFiveProductions, thisProductionTitle);
                 console.log(displayProductions);
+
+                console.log('tv-show year before addInfoCard call', displayProductions[1].year);
 
                 addInfoCard(actorName, actorPlaying, actorImageUrl, actorBio, displayProductions);
 
@@ -273,6 +273,10 @@ function removeThisProduction(topFiveProductions, thisProductionTitle) {
             i ++;
         }
     }
+    // if this production not in top 5, remove last production
+    if (topFiveProductions.length === 5) {
+        topFiveProductions.pop();
+    }
     return topFiveProductions;
 }
 
@@ -280,6 +284,8 @@ function removeThisProduction(topFiveProductions, thisProductionTitle) {
 
 // add info card
 function addInfoCard(actorName, actorPlaying, actorImageUrl, actorBio, displayProductions) {
+
+    console.log('tv-show year in addInfoCard', displayProductions[1].year);
 
     const videoContainer = document.getElementsByClassName('watch-video')[0];
     
@@ -376,6 +382,8 @@ function addInfoCard(actorName, actorPlaying, actorImageUrl, actorBio, displayPr
         smallTextProductionTitle.appendChild(smallTextProductionTitleText);
         productionText.appendChild(smallTextProductionTitle);
         // small text - production year
+
+        
         const smallTextProductionYear = document.createElement('div');
         smallTextProductionYear.classList.add('small-text', 'production-year');
         const smallTextProductionYearText = document.createTextNode(displayProduction.year);
@@ -386,9 +394,7 @@ function addInfoCard(actorName, actorPlaying, actorImageUrl, actorBio, displayPr
         productionsContainer.appendChild(production);
     }
     infoCardContent.appendChild(productionsContainer);
-    // productions container -> done
-
-    
+    // productions container -> done 
     
 }
 
