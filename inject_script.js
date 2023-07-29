@@ -147,6 +147,7 @@ async function getActorBio(actorId, page=1) {
         const response = await fetch(`${api_base_url}person/${actorId}?api_key=${api_key}&page=${page}`);
         data = await response.json();
     } catch (error) {}
+    console.log('bio data', data);
     // get the first 222 characters
     const length = 222;
     const displayBio = data.biography.slice(0, length+1) + '...';
