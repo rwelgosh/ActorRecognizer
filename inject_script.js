@@ -68,41 +68,52 @@ chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
         if (request.status === "actor data") {
             const actorData = request.data;
-            let actorName = actorData.CelebrityFaces[0].Name;
-            if (actorName in actorNameReplacements) {
-                actorName = actorNameReplacements[actorName];
+            // create an array of the identified actors
+            const identifiedActors = [];
+            for (const face of actorData.CelebrityFaces) {
+                let actorName = face.Name;
+                if (actorName in actorNameReplacements) {
+                    actorName = actorNameReplacements[actorName];
+                }
+                identifiedActors.push(actorName);
             }
-            const formattedName = actorName.replaceAll(' ', '%20');
+            console.log(identifiedActors);
 
-            (async () => {
+            for (const actorName of identifiedActors) {
+
+                const formattedName = actorName.replaceAll(' ', '%20');
+
+                (async () => {
                 
-                const actorId = await getActorIdFromName(formattedName);
-                console.log(actorId);
+                    const actorId = await getActorIdFromName(formattedName);
+                    // console.log(actorId);
+    
+                    const actorPlaying = await getActorPlaying(actorId, thisProductionTitle);
+                    // console.log(actorPlaying);
+    
+                    const actorImageUrl = await getActorImage(actorId);
+                    // console.log(actorImageUrl);
+    
+                    const actorBio = await getActorBio(actorId);
+                    // console.log(actorBio);
+    
+                    const topFiveProductions = await getTopFiveProductions(actorId);
+    
+                    const displayProductions = removeThisProduction(topFiveProductions, thisProductionTitle);
+                    // console.log(displayProductions);
+    
+                    addInfoCard(actorName, actorPlaying, actorImageUrl, actorBio, displayProductions);
+                        
+                })();    
 
-                const actorPlaying = await getActorPlaying(actorId, thisProductionTitle);
-                console.log(actorPlaying);
+            }
 
-                const actorImageUrl = await getActorImage(actorId);
-                console.log(actorImageUrl);
-
-                const actorBio = await getActorBio(actorId);
-                console.log(actorBio);
-
-                const topFiveProductions = await getTopFiveProductions(actorId);
-
-                const displayProductions = removeThisProduction(topFiveProductions, thisProductionTitle);
-                console.log(displayProductions);
-
-                addInfoCard(actorName, actorPlaying, actorImageUrl, actorBio, displayProductions);
-
-                
-                    
-            })();
+            // add boxes over faces
+            for (const face of actorData.CelebrityFaces) {
+                const boundingBox = face.Face.BoundingBox;
+                addFaceBox(boundingBox.Width, boundingBox.Height, boundingBox.Left, boundingBox.Top);
+            }
             
-
-
-            const boundingBox = actorData.CelebrityFaces[0].Face.BoundingBox
-            addBox(boundingBox.Width, boundingBox.Height, boundingBox.Left, boundingBox.Top);
             sendResponse({message:"received", paused:isVideoPaused});
             return true;
         }
@@ -330,7 +341,10 @@ function addInfoCard(actorName, actorPlaying, actorImageUrl, actorBio, displayPr
         cardBio.classList.add('card-bio');
         // p
         const p = document.createElement('p');
-        const pText = document.createTextNode(actorBio);
+        let pText = document.createTextNode(actorBio);
+        if (actorBio === '...') {
+            pText = document.createTextNode(`We couldn't find a biography for ${actorName}.`);
+        }
         p.appendChild(pText);
         cardBio.appendChild(p);
         // read more
@@ -339,7 +353,14 @@ function addInfoCard(actorName, actorPlaying, actorImageUrl, actorBio, displayPr
         // small text - read more
         const smallTextReadMore = document.createElement('div');
         smallTextReadMore.classList.add('small-text');
-        const smallTextReadMoreText = document.createTextNode('Read More');
+        let smallTextReadMoreText = document.createTextNode('Read More');
+        if (actorBio === '...') {
+            smallTextReadMoreText = document.createTextNode('Visit profile on TMDB');
+        }
+
+        // decrease height if no bio
+        
+
         smallTextReadMore.appendChild(smallTextReadMoreText);
         readMore.appendChild(smallTextReadMore);
         smallTextReadMore.insertAdjacentHTML('afterend', '<svg xmlns="http://www.w3.org/2000/svg" width="6" height="11" viewBox="0 0 6 11" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M5.35226 5.95956L1.10962 10.2022C0.855779 10.456 0.444221 10.456 0.190381 10.2022C-0.0634601 9.94836 -0.0634603 9.5368 0.190381 9.28296L3.9734 5.49994L0.190381 1.71692C-0.0634603 1.46308 -0.0634601 1.05152 0.190381 0.79768C0.444221 0.54384 0.855779 0.543839 1.10962 0.797681L5.35226 5.04032C5.6061 5.29416 5.6061 5.70572 5.35226 5.95956Z" fill="white" fill-opacity="0.6"/></svg>');
@@ -402,7 +423,7 @@ function addInfoCard(actorName, actorPlaying, actorImageUrl, actorBio, displayPr
 
 
 // add box over face
-function addBox(width, height, left, top) {
+function addFaceBox(width, height, left, top) {
     const videoContainer = document.getElementsByClassName('watch-video')[0];
     const box = document.createElement('div');
     box.style.width = `${width * window.innerWidth}px`;

@@ -10,8 +10,8 @@
     box-sizing: border-box;
     width: 329px;
     height: 330px;
-    left: 720px;
-    top: 120px;
+    /* left: 720px;
+    top: 120px; */
     z-index: 200;
     border-radius: 16px;
     background-image: linear-gradient(0deg, rgba(0, 0, 0, 0.10) 0%, rgba(0, 0, 0, 0.10) 100%);
@@ -25,10 +25,10 @@
 .info-card-content {
     position: absolute;
     box-sizing: border-box;
-    width: fit-content;
-    height: fit-content;
-    left: 720px;
-    top: 120px;
+    width: 329px;
+    height: 330px;
+    /* left: 720px;
+    top: 120px; */
     z-index: 200;
     border-radius: 16px;
     border: 0.5px solid rgba(222, 222, 222, 0.25);
@@ -93,7 +93,7 @@ h2 {
 
 .card-bio { 
     position: relative; 
-    min-height: 80px;
+    height: 80px;
 }
 
 p {
