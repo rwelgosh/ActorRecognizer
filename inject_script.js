@@ -79,12 +79,33 @@ chrome.runtime.onMessage.addListener(
             }
             console.log(identifiedActors);
 
-            for (const actorName of identifiedActors) {
+            // get safeArea
+            const videoContainer = document.getElementsByClassName('watch-video')[0].getBoundingClientRect();
+            const safeArea = new Object;
+            safeArea.height = 0.75 * videoContainer.height;
+            safeArea.top = videoContainer.top + (videoContainer.height - safeArea.height) / 3;
+            safeArea.width = videoContainer.width;
+            safeArea.left = videoContainer.left;
+            safeArea.bottom = safeArea.top + safeArea.height;
+            safeArea.right = safeArea.left + safeArea.width;
+            console.log('safeArea:', safeArea);
+            // draw safeArea
+            // const safeAreaDiv = document.createElement('div');
+            // safeAreaDiv.style.height = `${safeArea.height}px`;
+            // safeAreaDiv.style.top = `${safeArea.top}px`;
+            // safeAreaDiv.style.width = `${safeArea.width}px`;
+            // safeAreaDiv.style.left = `${safeArea.left}px`;
+            // safeAreaDiv.style.position = 'absolute';
+            // safeAreaDiv.style.zIndex = '190';
+            // safeAreaDiv.style.backgroundColor = 'rgba(217, 217, 217, 0.50)';
+            // document.getElementsByClassName('watch-video')[0].appendChild(safeAreaDiv);
 
-                const formattedName = actorName.replaceAll(' ', '%20');
+            (async() => {
 
-                (async () => {
-                
+                for (const actorName of identifiedActors) {
+
+                    const formattedName = actorName.replaceAll(' ', '%20');
+                    
                     const actorId = await getActorIdFromName(formattedName);
                     // console.log(actorId);
     
@@ -103,16 +124,24 @@ chrome.runtime.onMessage.addListener(
                     // console.log(displayProductions);
     
                     addInfoCard(actorName, actorPlaying, actorImageUrl, actorBio, displayProductions);
-                        
-                })();    
 
-            }
+                }
+                placeCardsWrapper(safeArea);
+    
+            })();
+
 
             // add boxes over faces
             for (const face of actorData.CelebrityFaces) {
+                let actorName = face.Name;
+                if (actorName in actorNameReplacements) {
+                    actorName = actorNameReplacements[actorName];
+                }
+                let faceBoxId = actorName.replaceAll(' ', '');
+                faceBoxId = faceBoxId.replaceAll('.', '') + '-faceBox';
                 const boundingBox = face.Face.BoundingBox;
-                addFaceBox(boundingBox.Width, boundingBox.Height, boundingBox.Left, boundingBox.Top);
-            }
+                addFaceBox(faceBoxId, boundingBox.Width, boundingBox.Height, boundingBox.Left, boundingBox.Top);
+            }            
             
             sendResponse({message:"received", paused:isVideoPaused});
             return true;
@@ -292,18 +321,26 @@ function removeThisProduction(topFiveProductions, thisProductionTitle) {
 // add info card
 function addInfoCard(actorName, actorPlaying, actorImageUrl, actorBio, displayProductions) {
 
+    let infoCardId = actorName.replaceAll(' ', '');
+    infoCardId = infoCardId.replaceAll('.', '') + '-infoCard';
+
     (async () => {
 
         const videoContainer = document.getElementsByClassName('watch-video')[0];
         
+        // note that we cannot put background and content in a container div in order for
+        // the blend mode to work correctly
+
         // card background
         const infoCardBackground = document.createElement('div');
         infoCardBackground.classList.add('info-card-background');
+        infoCardBackground.id = infoCardId + 'Background';
         videoContainer.appendChild(infoCardBackground);
     
         // card content
         const infoCardContent = document.createElement('div');
         infoCardContent.classList.add('info-card-content');
+        infoCardContent.id = infoCardId + 'Content';
         videoContainer.appendChild(infoCardContent);
     
         // card header
@@ -423,14 +460,309 @@ function addInfoCard(actorName, actorPlaying, actorImageUrl, actorBio, displayPr
 
 
 // add box over face
-function addFaceBox(width, height, left, top) {
+function addFaceBox(faceBoxId, width, height, left, top) {
     const videoContainer = document.getElementsByClassName('watch-video')[0];
     const box = document.createElement('div');
     box.style.width = `${width * window.innerWidth}px`;
     box.style.height = `${height * window.innerHeight}px`;
     box.style.left = `${left * window.innerWidth}px`;
     box.style.top = `${top * window.innerHeight}px`;
-    box.classList.add('face-box')
+    box.classList.add('face-box');
+    box.id = faceBoxId;
     videoContainer.appendChild(box);
+}
+
+
+
+// Backtracker
+
+// Wrapper function for placeCards
+// Defines all required variables
+function placeCardsWrapper(safeArea) {
+
+    const constData = {
+
+        'backdrop': safeArea,
+
+        'gap': 20,
+        'margin': 20,
+
+        'infoCardWidth': 329,
+        'infoCardHeight': 330,
+
+        // define an object of the bounding rects of all faces
+        'faceRects': getFaceRects()
+
+    };
+
+    console.log('constData:', constData);
+
+    // define an array of the unplaced info cards
+    const unplacedInfoCards = getUnplacedInfoCards();
+
+    console.log('unplacedInfoCards:', unplacedInfoCards);
+
+    // define an array of the placed info cards
+    // initially no info cards are placed
+    const placedInfoCards = [];
+
+    // define an array mapping cards to placements
+    // represents the best non-perfect placement
+    //   -- (1) the most cards are placed and (2) and at better placements
+    heuristicPlacements = [];
+
+    const result = placeCards(constData, unplacedInfoCards, placedInfoCards, heuristicPlacements);
+
+    if (result === null) {
+        placeHeuristically(heuristicPlacements, unplacedInfoCards, placedInfoCards);
+    }
+
+}
+
+// Backtracking function 
+function placeCards(constData, unplacedInfoCards, placedInfoCards, heuristicPlacements) {
+
+    // base case - all info cards have been placed
+    if (unplacedInfoCards.length === 0) {
+        return placedInfoCards;
+    }
+
+    // still cards to be placed
+
+    const tryCard = unplacedInfoCards[unplacedInfoCards.length-1];
+    // console.log('start', JSON.stringify(tryCard));
+
+    // loop through the possible placements
+    for (const placement of ['right', 'left', 'above', 'below']) {
+
+        console.log(placement);
+
+        // check if can place the card given the already placed cards
+        if (canPlaceThisCard(tryCard, placement, placedInfoCards, constData)) {
+            
+            // if yes, place it
+            placeThisCard(tryCard, placement, constData);
+            placedInfoCards.push(tryCard);
+            unplacedInfoCards.pop();
+
+            // update heuristic placements
+            if (placedInfoCards.length > heuristicPlacements.length) {
+                // careful to never redefine the array to keep the reference
+                heuristicPlacements.length = 0;
+                // push a clone of placedInfoCards
+                heuristicPlacements.push(...structuredClone(placedInfoCards));
+            }
+
+            console.log('placedInfoCards', JSON.stringify(placedInfoCards));
+            console.log('heuristicPlacements', JSON.stringify(heuristicPlacements));
+        
+            // recursively try to solve from this state
+            const solution = placeCards(constData, unplacedInfoCards, placedInfoCards, heuristicPlacements);
+
+            if (solution != null) {
+                // all cards are placed
+                return solution;
+            } 
+            
+            else {
+                // did not lead to a solution - undo move
+                placedInfoCards.pop();
+                unplacedInfoCards.push(tryCard);
+            }
+        }
+    }
+    return null;
+}
+
+
+
+
+
+// Backtracker Helper Functions
+
+// Returns an object of the face's id mapped to its bounding rect
+function getFaceRects() {
+    const faceRects = new Object;;
+    for (const face of document.getElementsByClassName('face-box')) {
+        faceRects[face.id] = face.getBoundingClientRect();
+    }
+    return faceRects;
+}
+
+// Returns an array of the info card's id mapped to its bounding rect
+function getUnplacedInfoCards() {
+    const unplacedInfoCards = [];
+    for (const infoCardBackground of document.getElementsByClassName('info-card-background')) {
+        baseId = infoCardBackground.id.slice(0, infoCardBackground.id.indexOf('-'));
+        const infoCardObject = new Object;
+        infoCardObject[baseId] = infoCardBackground.getBoundingClientRect();
+        unplacedInfoCards.push(infoCardObject);
+    }
+    return unplacedInfoCards;
+}
+
+// Legality checker for the backtracking
+function canPlaceThisCard(tryCard, placement, placedInfoCards, constData) {
+
+    console.log('backdrop', constData.backdrop);
+    
+    // temporarily place tryCard
+    placeThisCard(tryCard, placement, constData);
+    // console.log('after placement, in check func', JSON.stringify(tryCard));
+
+    const tryCardRect = tryCard[Object.keys(tryCard)[0]];
+    // console.log('checker -- tryCardRect', tryCardRect);
+        
+    // does not intersect with faceRect
+    for (const face in constData.faceRects) {
+        const faceRect = constData.faceRects[face];
+        if (tryCardRect.right + constData.gap > faceRect.left && faceRect.right + constData.gap > tryCardRect.left &&
+            tryCardRect.bottom + constData.gap > faceRect.top && faceRect.bottom + constData.gap > tryCardRect.top) {
+                // faceRect and tryCard intersect
+                undoTempPlacement(tryCard);
+                console.log('  undid temp placement');
+                return false;
+            }
+    }
+
+    // does not intersect with another infoCard
+    for (const infoCard of placedInfoCards) {
+        const infoCardRect = infoCard[Object.keys(infoCard)[0]];
+        if (tryCardRect.right + constData.gap > infoCardRect.left && infoCardRect.right + constData.gap > tryCardRect.left &&
+            tryCardRect.bottom + constData.gap > infoCardRect.top && infoCardRect.bottom + constData.gap > tryCardRect.top) {
+                // infoCard and tryCard intersect
+                undoTempPlacement(tryCard);
+                console.log('  undid temp placement');
+                return false;
+            }
+    }
+
+    // does not go off the screen
+    if (tryCardRect.left < constData.backdrop.left + constData.margin || tryCardRect.right + constData.margin > constData.backdrop.right ||
+        tryCardRect.top < constData.backdrop.top + constData.margin || tryCardRect.bottom + constData.margin > constData.backdrop.bottom) {
+            // tryCard goes off the screen
+            undoTempPlacement(tryCard);
+            console.log('  undid temp placement');
+            return false;
+        }
+    
+    // everything is legal
+    undoTempPlacement(tryCard);
+    console.log('  undid temp placement');
+    return true;
+}
+
+// Gives tryCard an updated position according to the specified placement 
+function placeThisCard(tryCard, placement, constData) {
+
+    // match tryCard to faceRect
+    const tryCardId = Object.keys(tryCard)[0];
+    const faceId = tryCardId + '-faceBox';
+    matchingFaceRect = constData.faceRects[faceId];
+
+    // get tryCard background and content HTML elements
+    tryCardBackground = document.getElementById(tryCardId + '-infoCardBackground');
+    tryCardContent = document.getElementById(tryCardId + '-infoCardContent');
+
+    switch (placement) {
+
+        case 'right':
+            tryCardBackground.style.left = `${matchingFaceRect.right + constData.gap}px`;
+            tryCardBackground.style.top = `${matchingFaceRect.top}px`;
+            tryCardContent.style.left = tryCardBackground.style.left;
+            tryCardContent.style.top = tryCardBackground.style.top;
+            console.log(`  placed ${tryCardId} ${placement} to ${faceId}`);
+            break;
+        
+        case 'left':
+            tryCardBackground.style.left = `${matchingFaceRect.left - constData.gap - constData.infoCardWidth}px`;
+            tryCardBackground.style.top = `${matchingFaceRect.top}px`;
+            tryCardContent.style.left = tryCardBackground.style.left;
+            tryCardContent.style.top = tryCardBackground.style.top;
+            console.log(`  placed ${tryCardId} ${placement} to ${faceId}`);
+            break;
+                
+        case 'above':
+            tryCardBackground.style.left = `${matchingFaceRect.left}px`;
+            tryCardBackground.style.top = `${matchingFaceRect.top - constData.gap - constData.infoCardHeight}px`;
+            tryCardContent.style.left = tryCardBackground.style.left;
+            tryCardContent.style.top = tryCardBackground.style.top;
+            console.log(`  placed ${tryCardId} ${placement} to ${faceId}`);
+            break;
+                
+        case 'below':
+            tryCardBackground.style.left = `${matchingFaceRect.left}px`;
+            tryCardBackground.style.top = `${matchingFaceRect.bottom + constData.gap}px`;
+            tryCardContent.style.left = tryCardBackground.style.left;
+            tryCardContent.style.top = tryCardBackground.style.top;
+            console.log(`  placed ${tryCardId} ${placement} to ${faceId}`);
+            break;
+            
+    }
+
+    // update tryCard with the new placement
+    tryCard[tryCardId] = tryCardBackground.getBoundingClientRect();
+
+}
+
+// Undo temp info card placement by removing left and top style properties
+function undoTempPlacement(tryCard) {
+
+    // get tryCard as an HTML element
+    const tryCardId = Object.keys(tryCard)[0];
+    // get tryCard background and content HTML elements
+    tryCardBackground = document.getElementById(tryCardId + '-infoCardBackground');
+    tryCardContent = document.getElementById(tryCardId + '-infoCardContent');
+    tryCardBackground.style.removeProperty('left');
+    tryCardBackground.style.removeProperty('top');
+    tryCardContent.style.removeProperty('left');
+    tryCardContent.style.removeProperty('top');
+
+}
+
+// Place the cards in heuristicPlacements
+function placeHeuristically(heuristicPlacements, unplacedInfoCards, placedInfoCards) {
+
+    // loop through the array
+    for (const card of heuristicPlacements) {
+
+        console.log('card in heuristic:', card);
+
+        // get card id
+        const cardId = Object.keys(card)[0]
+
+        // get card background and content as HTML elements
+        cardBackground = document.getElementById(cardId + '-infoCardBackground');
+        cardContent = document.getElementById(cardId + '-infoCardContent');
+
+        // place card
+        cardBackground.style.left = `${card[cardId].left}px`;
+        cardBackground.style.top = `${card[cardId].top}px`;
+        cardContent.style.left = cardBackground.style.left;
+        cardContent.style.top = cardBackground.style.top;
+
+        // update placed and unplaced infoCards
+        placedInfoCards.push(card);
+        unplacedInfoCards.pop();
+
+        // hide any cards that have not been placed
+        for (const unplacedCard of unplacedInfoCards) {
+
+            const unplacedCardId = Object.keys(unplacedCard)[0]
+
+            // get card background and content as HTML elements
+            unplacedCardBackground = document.getElementById(unplacedCardId + '-infoCardBackground');
+            unplacedCardContent = document.getElementById(unplacedCardId + '-infoCardContent');
+
+            // hide
+            unplacedCardBackground.style.display = 'none';
+            unplacedCardContent.style.display = 'none';
+
+        }
+
+    }
+
+    console.log('placed heuristically');
+
 }
 

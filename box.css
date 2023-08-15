@@ -1,5 +1,6 @@
 .face-box {
-    background-color: red;
+    /* background-color: red; */
+    background: none;
     opacity: 0.5;
     position: absolute;
     z-index: 100;
