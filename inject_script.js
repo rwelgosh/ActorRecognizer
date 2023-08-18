@@ -123,10 +123,11 @@ chrome.runtime.onMessage.addListener(
                     const displayProductions = removeThisProduction(topFiveProductions, thisProductionTitle);
                     // console.log(displayProductions);
     
-                    addInfoCard(actorName, actorPlaying, actorImageUrl, actorBio, displayProductions);
+                    addInfoCard(actorId, actorName, actorPlaying, actorImageUrl, actorBio, displayProductions);
 
                 }
                 placeCardsWrapper(safeArea);
+                collapseInfoCards();
     
             })();
 
@@ -319,7 +320,7 @@ function removeThisProduction(topFiveProductions, thisProductionTitle) {
 
 
 // add info card
-function addInfoCard(actorName, actorPlaying, actorImageUrl, actorBio, displayProductions) {
+function addInfoCard(actorId, actorName, actorPlaying, actorImageUrl, actorBio, displayProductions) {
 
     let infoCardId = actorName.replaceAll(' ', '');
     infoCardId = infoCardId.replaceAll('.', '') + '-infoCard';
@@ -369,8 +370,22 @@ function addInfoCard(actorName, actorPlaying, actorImageUrl, actorBio, displayPr
         headerText.appendChild(h2);
         cardHeaderLeft.appendChild(headerText);
         cardHeader.appendChild(cardHeaderLeft);
+        // arrow button
+        const arrowButtonContainer = document.createElement('div');
+        arrowButtonContainer.classList.add('arrow-button-container');
+        arrowButtonContainer.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="header-arrow-icon" width="18" height="10" viewBox="0 0 18 10" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M9.7071 0.292893L17.7071 8.29289C18.0976 8.68342 18.0976 9.31658 17.7071 9.70711C17.3166 10.0976 16.6834 10.0976 16.2929 9.70711L8.99999 2.41421L1.7071 9.70711C1.31657 10.0976 0.68341 10.0976 0.292886 9.70711C-0.0976385 9.31658 -0.0976388 8.68342 0.292886 8.29289L8.29289 0.292893C8.68341 -0.0976309 9.31658 -0.0976309 9.7071 0.292893Z" fill="currentColor"/></svg>'
+        arrowButtonContainer.onclick = () => { 
+            console.log('test'); 
+            if (infoCardContent.classList.contains('collapsed')) {
+                infoCardContent.classList.remove('collapsed');
+                infoCardBackground.classList.remove('collapsed');
+            } else {
+                infoCardContent.classList.add('collapsed');
+                infoCardBackground.classList.add('collapsed');
+            }
+        };
+        cardHeader.appendChild(arrowButtonContainer);
         infoCardContent.appendChild(cardHeader);
-        cardHeaderLeft.insertAdjacentHTML('afterend', '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="10" viewBox="0 0 18 10" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M9.7071 0.292893L17.7071 8.29289C18.0976 8.68342 18.0976 9.31658 17.7071 9.70711C17.3166 10.0976 16.6834 10.0976 16.2929 9.70711L8.99999 2.41421L1.7071 9.70711C1.31657 10.0976 0.68341 10.0976 0.292886 9.70711C-0.0976385 9.31658 -0.0976388 8.68342 0.292886 8.29289L8.29289 0.292893C8.68341 -0.0976309 9.31658 -0.0976309 9.7071 0.292893Z" fill="white" fill-opacity="0.9"/></svg>');
         // card header -> done
     
         // card bio
@@ -385,7 +400,9 @@ function addInfoCard(actorName, actorPlaying, actorImageUrl, actorBio, displayPr
         p.appendChild(pText);
         cardBio.appendChild(p);
         // read more
-        const readMore = document.createElement('div');
+        const readMore = document.createElement('a');
+        readMore.href = `https://www.themoviedb.org/person/${actorId}`;
+        readMore.target = '_blank';
         readMore.classList.add('read-more');
         // small text - read more
         const smallTextReadMore = document.createElement('div');
@@ -400,7 +417,7 @@ function addInfoCard(actorName, actorPlaying, actorImageUrl, actorBio, displayPr
 
         smallTextReadMore.appendChild(smallTextReadMoreText);
         readMore.appendChild(smallTextReadMore);
-        smallTextReadMore.insertAdjacentHTML('afterend', '<svg xmlns="http://www.w3.org/2000/svg" width="6" height="11" viewBox="0 0 6 11" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M5.35226 5.95956L1.10962 10.2022C0.855779 10.456 0.444221 10.456 0.190381 10.2022C-0.0634601 9.94836 -0.0634603 9.5368 0.190381 9.28296L3.9734 5.49994L0.190381 1.71692C-0.0634603 1.46308 -0.0634601 1.05152 0.190381 0.79768C0.444221 0.54384 0.855779 0.543839 1.10962 0.797681L5.35226 5.04032C5.6061 5.29416 5.6061 5.70572 5.35226 5.95956Z" fill="white" fill-opacity="0.6"/></svg>');
+        smallTextReadMore.insertAdjacentHTML('afterend', '<svg xmlns="http://www.w3.org/2000/svg" width="6" height="11" viewBox="0 0 6 11" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M5.35226 5.95956L1.10962 10.2022C0.855779 10.456 0.444221 10.456 0.190381 10.2022C-0.0634601 9.94836 -0.0634603 9.5368 0.190381 9.28296L3.9734 5.49994L0.190381 1.71692C-0.0634603 1.46308 -0.0634601 1.05152 0.190381 0.79768C0.444221 0.54384 0.855779 0.543839 1.10962 0.797681L5.35226 5.04032C5.6061 5.29416 5.6061 5.70572 5.35226 5.95956Z" fill="currentColor"/></svg>');
         cardBio.appendChild(readMore);
         infoCardContent.appendChild(cardBio);
         // card bio -> done
@@ -418,8 +435,11 @@ function addInfoCard(actorName, actorPlaying, actorImageUrl, actorBio, displayPr
         productionsContainer.classList.add('productions-container');
         // for each display production 
         for (const displayProduction of displayProductions) {
+            console.log(displayProduction);
             // production
-            const production = document.createElement('div');
+            const production = document.createElement('a');
+            production.target = '_blank';
+            // href will be set in the conditional below
             production.classList.add('production');
             // production image container
             const productionImageContainer = document.createElement('div');
@@ -437,10 +457,15 @@ function addInfoCard(actorName, actorPlaying, actorImageUrl, actorBio, displayPr
             productionText.appendChild(smallTextProductionTitle);
             // small text - production year
             if (displayProduction.year.constructor === Array) {
-                const firstAirYear = displayProduction.year[0]
+                const firstAirYear = displayProduction.year[0];
                 // make call to get last air date
                 const lastAirYear = await getLastAirYear(displayProduction.id);
                 displayProduction.year = firstAirYear + '–' + lastAirYear;
+                // this production is a tv show, so link the appropriate url
+                production.href = `https://www.themoviedb.org/tv/${displayProduction.id}`;
+            } else {
+                // this production is a movie show, so link the appropriate url
+                production.href = `https://www.themoviedb.org/movie/${displayProduction.id}`;
             }
             const smallTextProductionYear = document.createElement('div');
             smallTextProductionYear.classList.add('small-text', 'production-year');
@@ -458,6 +483,11 @@ function addInfoCard(actorName, actorPlaying, actorImageUrl, actorBio, displayPr
 
 }
 
+// collapses all info cards
+function collapseInfoCards() {
+
+}
+
 
 // add box over face
 function addFaceBox(faceBoxId, width, height, left, top) {
@@ -471,7 +501,6 @@ function addFaceBox(faceBoxId, width, height, left, top) {
     box.id = faceBoxId;
     videoContainer.appendChild(box);
 }
-
 
 
 // Backtracker
