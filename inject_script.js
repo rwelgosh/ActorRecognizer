@@ -486,6 +486,17 @@ function addInfoCard(actorId, actorName, actorPlaying, actorImageUrl, actorBio, 
 // collapses all info cards
 function collapseInfoCards() {
 
+    const infoCardBackgroundElements = document.getElementsByClassName('info-card-background');
+    const infoCardContentElements = document.getElementsByClassName('info-card-content');
+
+    for (const element of infoCardBackgroundElements) {
+        element.classList.add('collapsed');
+    }
+
+    for (const element of infoCardContentElements) {
+        element.classList.add('collapsed');
+    }
+
 }
 
 
