@@ -1,3 +1,5 @@
+//@ sourceUrl=inject_script.js
+
 const api_key = "4e030ef294d25cb08d568e060ace3699";
 const api_base_url = 'https://api.themoviedb.org/3/';
 const profile_image_base_url = 'https://image.tmdb.org/t/p/w185';
@@ -18,6 +20,8 @@ const playPauseObserver = new MutationObserver(mutationList => {
             if (addedNode.classList.contains('playback-notification--play')) {
                 isVideoPaused = false;
                 console.log('played');
+                // remove info cards and face boxes if on screen
+                removeAllPlacedElements();
             }
             else if (addedNode.classList.contains('playback-notification--pause')) {
                 isVideoPaused = true;
@@ -63,6 +67,34 @@ const ageAdvisorObserver = new MutationObserver(mutationList => {
 ageAdvisorObserver.observe(document.getElementsByClassName('watch-video')[0], { subtree: true, childList: true });
 
 
+// 
+// NEED TO REMOVE CARDS ON SCRUB AS WELL
+// 
+
+
+
+// Removes all face boxes and info cards on screen
+function removeAllPlacedElements() {
+
+    // face boxes
+    while (document.getElementsByClassName('face-box').length > 0) {
+        document.getElementsByClassName('face-box')[0].remove();
+    }
+
+    // info card background
+    while (document.getElementsByClassName('info-card-background').length > 0) {
+        document.getElementsByClassName('info-card-background')[0].remove();
+    }
+
+    // info card content
+    while (document.getElementsByClassName('info-card-content').length > 0) {
+        document.getElementsByClassName('info-card-content')[0].remove();
+    }
+
+}
+
+
+
 // get the actor data
 chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
@@ -81,12 +113,14 @@ chrome.runtime.onMessage.addListener(
 
             // get safeArea
             const videoContainer = document.getElementsByClassName('watch-video')[0].getBoundingClientRect();
+            // const safeAreaTop = document.getElementsByClassName('ltr-1dcjcj4')[0].getBoundingClientRect().bottom;
+            // const safeAreaBottom = document.getElementsByClassName('watch-video--bottom-controls-container')[0].getBoundingClientRect().top;
             const safeArea = new Object;
-            safeArea.height = 0.75 * videoContainer.height;
-            safeArea.top = videoContainer.top + (videoContainer.height - safeArea.height) / 3;
+            safeArea.top = videoContainer.top;
+            safeArea.bottom = videoContainer.bottom;
+            safeArea.height = safeArea.bottom - safeArea.top;
             safeArea.width = videoContainer.width;
             safeArea.left = videoContainer.left;
-            safeArea.bottom = safeArea.top + safeArea.height;
             safeArea.right = safeArea.left + safeArea.width;
             console.log('safeArea:', safeArea);
             // draw safeArea
@@ -375,7 +409,6 @@ function addInfoCard(actorId, actorName, actorPlaying, actorImageUrl, actorBio, 
         arrowButtonContainer.classList.add('arrow-button-container');
         arrowButtonContainer.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="header-arrow-icon" width="18" height="10" viewBox="0 0 18 10" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M9.7071 0.292893L17.7071 8.29289C18.0976 8.68342 18.0976 9.31658 17.7071 9.70711C17.3166 10.0976 16.6834 10.0976 16.2929 9.70711L8.99999 2.41421L1.7071 9.70711C1.31657 10.0976 0.68341 10.0976 0.292886 9.70711C-0.0976385 9.31658 -0.0976388 8.68342 0.292886 8.29289L8.29289 0.292893C8.68341 -0.0976309 9.31658 -0.0976309 9.7071 0.292893Z" fill="currentColor"/></svg>'
         arrowButtonContainer.onclick = () => { 
-            console.log('test'); 
             if (infoCardContent.classList.contains('collapsed')) {
                 infoCardContent.classList.remove('collapsed');
                 infoCardBackground.classList.remove('collapsed');
@@ -648,7 +681,7 @@ function canPlaceThisCard(tryCard, placement, placedInfoCards, constData) {
     
     // temporarily place tryCard
     placeThisCard(tryCard, placement, constData);
-    // console.log('after placement, in check func', JSON.stringify(tryCard));
+    console.log('after placement, in check func', JSON.stringify(tryCard));
 
     const tryCardRect = tryCard[Object.keys(tryCard)[0]];
     // console.log('checker -- tryCardRect', tryCardRect);
@@ -660,7 +693,7 @@ function canPlaceThisCard(tryCard, placement, placedInfoCards, constData) {
             tryCardRect.bottom + constData.gap > faceRect.top && faceRect.bottom + constData.gap > tryCardRect.top) {
                 // faceRect and tryCard intersect
                 undoTempPlacement(tryCard);
-                console.log('  undid temp placement');
+                console.log('  undid temp placement, faceRect intersection');
                 return false;
             }
     }
@@ -672,7 +705,7 @@ function canPlaceThisCard(tryCard, placement, placedInfoCards, constData) {
             tryCardRect.bottom + constData.gap > infoCardRect.top && infoCardRect.bottom + constData.gap > tryCardRect.top) {
                 // infoCard and tryCard intersect
                 undoTempPlacement(tryCard);
-                console.log('  undid temp placement');
+                console.log('  undid temp placement, intersection with another card');
                 return false;
             }
     }
@@ -682,7 +715,8 @@ function canPlaceThisCard(tryCard, placement, placedInfoCards, constData) {
         tryCardRect.top < constData.backdrop.top + constData.margin || tryCardRect.bottom + constData.margin > constData.backdrop.bottom) {
             // tryCard goes off the screen
             undoTempPlacement(tryCard);
-            console.log('  undid temp placement');
+            console.log('  constData.margin', JSON.stringify(constData.margin), 'tryCardRect.top', JSON.stringify(tryCardRect.top), 'constData.backdrop.top', JSON.stringify(constData.backdrop.top));
+            console.log('  undid temp placement, off the screen');
             return false;
         }
     
@@ -741,7 +775,17 @@ function placeThisCard(tryCard, placement, constData) {
     }
 
     // update tryCard with the new placement
-    tryCard[tryCardId] = tryCardBackground.getBoundingClientRect();
+    // bounding box sometimes does not get updated for some reason,
+    // so using .style instead
+    tryCard[tryCardId] = {
+        'left': Number((document.getElementById(tryCardId + '-infoCardBackground').style.left).slice(0, -2)),
+        'width': constData.infoCardWidth,
+        'right': Number((document.getElementById(tryCardId + '-infoCardBackground').style.left).slice(0, -2)) + constData.infoCardWidth,
+        'top': Number((document.getElementById(tryCardId + '-infoCardBackground').style.top).slice(0, -2)),
+        'height': constData.infoCardHeight,
+        'bottom': Number((document.getElementById(tryCardId + '-infoCardBackground').style.top).slice(0, -2)) + constData.infoCardHeight
+    };
+    console.log('try card in place func after update', tryCard);
 
 }
 
