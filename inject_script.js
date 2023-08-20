@@ -230,7 +230,7 @@ async function getActorBio(actorId, page=1) {
     } catch (error) {}
     console.log('bio data', data);
     // get the first 222 characters
-    const length = 222;
+    const length = 210;
     const displayBio = data.biography.slice(0, length+1) + '...';
     return displayBio;
 }
@@ -689,8 +689,9 @@ function canPlaceThisCard(tryCard, placement, placedInfoCards, constData) {
     // does not intersect with faceRect
     for (const face in constData.faceRects) {
         const faceRect = constData.faceRects[face];
-        if (tryCardRect.right + constData.gap > faceRect.left && faceRect.right + constData.gap > tryCardRect.left &&
-            tryCardRect.bottom + constData.gap > faceRect.top && faceRect.bottom + constData.gap > tryCardRect.top) {
+        // + 1 to add some leeway 
+        if (tryCardRect.right + constData.gap > faceRect.left + 1 && faceRect.right + constData.gap > tryCardRect.left + 1 &&
+            tryCardRect.bottom + constData.gap > faceRect.top + 1 && faceRect.bottom + constData.gap > tryCardRect.top + 1) {
                 // faceRect and tryCard intersect
                 undoTempPlacement(tryCard);
                 console.log('  undid temp placement, faceRect intersection');
@@ -701,8 +702,9 @@ function canPlaceThisCard(tryCard, placement, placedInfoCards, constData) {
     // does not intersect with another infoCard
     for (const infoCard of placedInfoCards) {
         const infoCardRect = infoCard[Object.keys(infoCard)[0]];
-        if (tryCardRect.right + constData.gap > infoCardRect.left && infoCardRect.right + constData.gap > tryCardRect.left &&
-            tryCardRect.bottom + constData.gap > infoCardRect.top && infoCardRect.bottom + constData.gap > tryCardRect.top) {
+        // + 1 to add some leeway 
+        if (tryCardRect.right + constData.gap > infoCardRect.left + 1 && infoCardRect.right + constData.gap > tryCardRect.left + 1 &&
+            tryCardRect.bottom + constData.gap > infoCardRect.top + 1 && infoCardRect.bottom + constData.gap > tryCardRect.top + 1) {
                 // infoCard and tryCard intersect
                 undoTempPlacement(tryCard);
                 console.log('  undid temp placement, intersection with another card');
@@ -785,7 +787,7 @@ function placeThisCard(tryCard, placement, constData) {
         'height': constData.infoCardHeight,
         'bottom': Number((document.getElementById(tryCardId + '-infoCardBackground').style.top).slice(0, -2)) + constData.infoCardHeight
     };
-    console.log('try card in place func after update', tryCard);
+    console.log('try card in place func after update', JSON.stringify(tryCard));
 
 }
 
