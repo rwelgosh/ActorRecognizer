@@ -5,7 +5,7 @@ const api_base_url = 'https://api.themoviedb.org/3/';
 const profile_image_base_url = 'https://image.tmdb.org/t/p/w185';
 const poster_image_base_url = 'https://image.tmdb.org/t/p/w342';
 
-// hard coded names to change
+// hardcoded names to change
 const actorNameReplacements = {
     'Gabriel Delmotte': 'Gabriel Macht'
 };
@@ -70,7 +70,6 @@ ageAdvisorObserver.observe(document.getElementsByClassName('watch-video')[0], { 
 // 
 // NEED TO REMOVE CARDS ON SCRUB AS WELL
 // 
-
 
 
 // Removes all face boxes and info cards on screen
@@ -161,7 +160,7 @@ chrome.runtime.onMessage.addListener(
 
                 }
                 placeCardsWrapper(safeArea);
-                collapseInfoCards();
+                setInfoCardsInitialState();
     
             })();
 
@@ -230,7 +229,7 @@ async function getActorBio(actorId, page=1) {
     } catch (error) {}
     console.log('bio data', data);
     // get the first 222 characters
-    const length = 210;
+    const length = 206;
     const displayBio = data.biography.slice(0, length+1) + '...';
     return displayBio;
 }
@@ -412,6 +411,9 @@ function addInfoCard(actorId, actorName, actorPlaying, actorImageUrl, actorBio, 
             if (infoCardContent.classList.contains('collapsed')) {
                 infoCardContent.classList.remove('collapsed');
                 infoCardBackground.classList.remove('collapsed');
+            } else if (infoCardContent.classList.contains('initial-state')) {
+                infoCardContent.classList.remove('initial-state');
+                infoCardBackground.classList.remove('initial-state');
             } else {
                 infoCardContent.classList.add('collapsed');
                 infoCardBackground.classList.add('collapsed');
@@ -516,18 +518,18 @@ function addInfoCard(actorId, actorName, actorPlaying, actorImageUrl, actorBio, 
 
 }
 
-// collapses all info cards
-function collapseInfoCards() {
+// collapses all info cards to their initial state
+function setInfoCardsInitialState() {
 
     const infoCardBackgroundElements = document.getElementsByClassName('info-card-background');
     const infoCardContentElements = document.getElementsByClassName('info-card-content');
 
     for (const element of infoCardBackgroundElements) {
-        element.classList.add('collapsed');
+        element.classList.add('initial-state');
     }
 
     for (const element of infoCardContentElements) {
-        element.classList.add('collapsed');
+        element.classList.add('initial-state');
     }
 
 }
@@ -646,9 +648,6 @@ function placeCards(constData, unplacedInfoCards, placedInfoCards, heuristicPlac
     }
     return null;
 }
-
-
-
 
 
 // Backtracker Helper Functions
