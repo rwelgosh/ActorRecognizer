@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Actor Recognizer",
+  "name": "Actordentify",
   "version": "1.0",
   "description": "An extension to ",
   "background": {
@@ -13,14 +13,14 @@
   "content_scripts": [
     {
       "matches": [
-        "http://*/*",
-        "https://*/*"
+        "https://www.netflix.com/watch/*",
+        "http://www.netflix.com/watch/*"
       ],
       "js": [
         "inject_script.js"
       ],
       "css": [
-        "box.css"
+        "inject_style.css"
       ],
       "run_at": "document_end"
     }
