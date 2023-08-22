@@ -1,4 +1,4 @@
-//@ sourceUrl=inject_script.js
+//@ sourceUrl=inject_script.js // to appear in chrome debugger
 
 const api_key = "4e030ef294d25cb08d568e060ace3699";
 const api_base_url = 'https://api.themoviedb.org/3/';
@@ -10,6 +10,10 @@ const actorNameReplacements = {
     'Gabriel Delmotte': 'Gabriel Macht'
 };
 
+////////////////////////////////////////////////////
+// OBSERVERS
+////////////////////////////////////////////////////
+
 let isVideoPaused;
 let thisProductionTitle;
 
@@ -19,13 +23,13 @@ const playPauseObserver = new MutationObserver(mutationList => {
         mutation.addedNodes.forEach(addedNode => {
             if (addedNode.classList.contains('playback-notification--play')) {
                 isVideoPaused = false;
-                console.log('played');
-                // remove info cards and face boxes if on screen
+                // console.log('played');
+                // remove info cards and face boxes on screen
                 removeAllPlacedElements();
             }
             else if (addedNode.classList.contains('playback-notification--pause')) {
                 isVideoPaused = true;
-                console.log('paused');
+                // console.log('paused');
                 // hide caption text when paused
                 const captionText = document.getElementsByClassName('player-timedtext')[0];
                 captionText.style.display = 'none';
@@ -67,34 +71,10 @@ const ageAdvisorObserver = new MutationObserver(mutationList => {
 ageAdvisorObserver.observe(document.getElementsByClassName('watch-video')[0], { subtree: true, childList: true });
 
 
-// 
-// NEED TO REMOVE CARDS ON SCRUB AS WELL
-// 
+////////////////////////////////////////////////////
+// FACIAL RECOGNITION DATA RECEIVED, TRIGGER UI CODE
+////////////////////////////////////////////////////
 
-
-// Removes all face boxes and info cards on screen
-function removeAllPlacedElements() {
-
-    // face boxes
-    while (document.getElementsByClassName('face-box').length > 0) {
-        document.getElementsByClassName('face-box')[0].remove();
-    }
-
-    // info card background
-    while (document.getElementsByClassName('info-card-background').length > 0) {
-        document.getElementsByClassName('info-card-background')[0].remove();
-    }
-
-    // info card content
-    while (document.getElementsByClassName('info-card-content').length > 0) {
-        document.getElementsByClassName('info-card-content')[0].remove();
-    }
-
-}
-
-
-
-// get the actor data
 chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
         if (request.status === "actor data") {
@@ -108,12 +88,9 @@ chrome.runtime.onMessage.addListener(
                 }
                 identifiedActors.push(actorName);
             }
-            console.log(identifiedActors);
-
+            // console.log(identifiedActors);
             // get safeArea
             const videoContainer = document.getElementsByClassName('watch-video')[0].getBoundingClientRect();
-            // const safeAreaTop = document.getElementsByClassName('ltr-1dcjcj4')[0].getBoundingClientRect().bottom;
-            // const safeAreaBottom = document.getElementsByClassName('watch-video--bottom-controls-container')[0].getBoundingClientRect().top;
             const safeArea = new Object;
             safeArea.top = videoContainer.top;
             safeArea.bottom = videoContainer.bottom;
@@ -121,7 +98,6 @@ chrome.runtime.onMessage.addListener(
             safeArea.width = videoContainer.width;
             safeArea.left = videoContainer.left;
             safeArea.right = safeArea.left + safeArea.width;
-            console.log('safeArea:', safeArea);
             // draw safeArea
             // const safeAreaDiv = document.createElement('div');
             // safeAreaDiv.style.height = `${safeArea.height}px`;
@@ -133,6 +109,8 @@ chrome.runtime.onMessage.addListener(
             // safeAreaDiv.style.backgroundColor = 'rgba(217, 217, 217, 0.50)';
             // document.getElementsByClassName('watch-video')[0].appendChild(safeAreaDiv);
 
+            
+            // create info cards
             (async() => {
 
                 for (const actorName of identifiedActors) {
@@ -159,13 +137,14 @@ chrome.runtime.onMessage.addListener(
                     addInfoCard(actorId, actorName, actorPlaying, actorImageUrl, actorBio, displayProductions);
 
                 }
+                // place info cards
                 placeCardsWrapper(safeArea);
                 setInfoCardsInitialState();
     
             })();
 
 
-            // add boxes over faces
+            // add face boxes
             for (const face of actorData.CelebrityFaces) {
                 let actorName = face.Name;
                 if (actorName in actorNameReplacements) {
@@ -184,8 +163,11 @@ chrome.runtime.onMessage.addListener(
 );
 
 
+////////////////////////////////////////////////////
+// TMDB CALL AND HELPER FUNCTIONS
+////////////////////////////////////////////////////
 
-
+// calls TMDB API to get the TMDB ID from the given actor name
 async function getActorIdFromName(actorName, page=1) {
     let data = [];
     try {
@@ -193,10 +175,11 @@ async function getActorIdFromName(actorName, page=1) {
         data = await response.json();
     }
     catch (error) {}
-    console.log(data);
+    // console.log(data);
     return data.results[0].id
 }
 
+// calls TMDB API to get the actor profile image
 async function getActorImage(actorId, page=1) {
     let data = [];
     try {
@@ -206,6 +189,7 @@ async function getActorImage(actorId, page=1) {
     return profile_image_base_url + data.profiles[0].file_path;
 }
 
+// calls TMDB API and checks with the name of the production on screen to get the character the actor is playing
 async function getActorPlaying(actorId, productionTitle, page=1) {
     let data = [];
     let character;
@@ -221,19 +205,21 @@ async function getActorPlaying(actorId, productionTitle, page=1) {
     return character;
 }
 
+// calls TMDB API to get the actor bio and trims it to the desired length
 async function getActorBio(actorId, page=1) {
     let data = [];
     try {
         const response = await fetch(`${api_base_url}person/${actorId}?api_key=${api_key}&page=${page}`);
         data = await response.json();
     } catch (error) {}
-    console.log('bio data', data);
+    // console.log('bio data', data);
     // get the first 222 characters
     const length = 206;
     const displayBio = data.biography.slice(0, length+1) + '...';
     return displayBio;
 }
 
+// calls TMDB API to get credited productions and return the top 5 by popularity
 async function getTopFiveProductions(actorId, page=1) {
     let data = [];
     try {
@@ -243,8 +229,6 @@ async function getTopFiveProductions(actorId, page=1) {
 
     const productions = [];
     for (const production of data.cast) {
-
-        // console.log(production);
 
         const productionData = new Object;
 
@@ -260,7 +244,7 @@ async function getTopFiveProductions(actorId, page=1) {
         }
 
         // add title
-        if ('title' in production && production.title !== null) { 
+        if ('title' in production && production.title != null) { 
             // don't include numbered sequels
             if (endsInNumber(production.title)) { continue; }
             productionData['title'] = production.title; 
@@ -269,34 +253,26 @@ async function getTopFiveProductions(actorId, page=1) {
         } else { continue; }
 
         // add year
-        if ('release_date' in production && production.release_date !== null) {
+        if ('release_date' in production && production.release_date != null) {
             const year = production.release_date.slice(0, 4);
             productionData['year'] = year;
-        } 
-        else if ('first_air_date' in production && production.first_air_date !== null) {
+        } else if ('first_air_date' in production && production.first_air_date != null) {
             const firstAirYear = production.first_air_date.slice(0, 4);
             productionData['year'] = [firstAirYear, null]; // [firstAirYear, lastAirYear] -- lastAirYear to be called for later
-            // const firstAirYear = production.first_air_date.slice(0, 4);
-            // // make call to get last air date
-            // (async () => {
-            //     const lastAirYear = await getLastAirYear(production.id);
-            //     productionData['year'] = firstAirYear + '–' + lastAirYear;
-            // })();
-        } 
-        else { continue; }
+        } else { continue; }
 
         // add popularity
-        if ('popularity' in production && production.popularity !== null) { 
+        if ('popularity' in production && production.popularity != null) { 
             productionData['popularity'] = production.popularity; 
         } else { continue; } 
 
         // add poster path
-        if ('poster_path' in production && production.poster_path !== null) {
+        if ('poster_path' in production && production.poster_path != null) {
             productionData['posterPath'] = production.poster_path;
         } else { continue; } 
 
         // add id 
-        if ('id' in production && production.id !== null) {
+        if ('id' in production && production.id != null) {
             productionData['id'] = production.id;
         } else { continue; } 
 
@@ -316,15 +292,16 @@ async function getTopFiveProductions(actorId, page=1) {
         if (productions.length > 5) {
             productions.pop()
         }
-        // console.log(productionData);
     }
     return productions;
 }
 
+// helper function to determine if a title ends in a number
 function endsInNumber(title) {
     return /[0-9]/.test(title.slice(-1));
 }
 
+// calls TMDB API to get the last air year of a tv show
 async function getLastAirYear(tvId) {
     let data = [];
     try {
@@ -334,6 +311,7 @@ async function getLastAirYear(tvId) {
     return data.last_air_date.slice(0, 4);
 }
 
+// removes the production on screen from topFiveProductions, or otherwise reduces it to four productions
 function removeThisProduction(topFiveProductions, thisProductionTitle) {
     let i = 0;
     while (i < topFiveProductions.length) {
@@ -351,8 +329,11 @@ function removeThisProduction(topFiveProductions, thisProductionTitle) {
 }
 
 
+////////////////////////////////////////////////////
+// CREATE INFO CARDS AND FACE BOXES AND ADD TO DOM
+////////////////////////////////////////////////////
 
-// add info card
+// creates and adds the info cards
 function addInfoCard(actorId, actorName, actorPlaying, actorImageUrl, actorBio, displayProductions) {
 
     let infoCardId = actorName.replaceAll(' ', '');
@@ -407,6 +388,7 @@ function addInfoCard(actorId, actorName, actorPlaying, actorImageUrl, actorBio, 
         const arrowButtonContainer = document.createElement('div');
         arrowButtonContainer.classList.add('arrow-button-container');
         arrowButtonContainer.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="header-arrow-icon" width="18" height="10" viewBox="0 0 18 10" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M9.7071 0.292893L17.7071 8.29289C18.0976 8.68342 18.0976 9.31658 17.7071 9.70711C17.3166 10.0976 16.6834 10.0976 16.2929 9.70711L8.99999 2.41421L1.7071 9.70711C1.31657 10.0976 0.68341 10.0976 0.292886 9.70711C-0.0976385 9.31658 -0.0976388 8.68342 0.292886 8.29289L8.29289 0.292893C8.68341 -0.0976309 9.31658 -0.0976309 9.7071 0.292893Z" fill="currentColor"/></svg>'
+            // define onclick behavior 
         arrowButtonContainer.onclick = () => { 
             if (infoCardContent.classList.contains('collapsed')) {
                 infoCardContent.classList.remove('collapsed');
@@ -429,6 +411,7 @@ function addInfoCard(actorId, actorName, actorPlaying, actorImageUrl, actorBio, 
         // p
         const p = document.createElement('p');
         let pText = document.createTextNode(actorBio);
+            // if no bio, add default message
         if (actorBio === '...') {
             pText = document.createTextNode(`We couldn't find a biography for ${actorName}.`);
         }
@@ -443,13 +426,10 @@ function addInfoCard(actorId, actorName, actorPlaying, actorImageUrl, actorBio, 
         const smallTextReadMore = document.createElement('div');
         smallTextReadMore.classList.add('small-text');
         let smallTextReadMoreText = document.createTextNode('Read More');
+            // change link text if no actor bio
         if (actorBio === '...') {
             smallTextReadMoreText = document.createTextNode('Visit profile on TMDB');
         }
-
-        // decrease height if no bio
-        
-
         smallTextReadMore.appendChild(smallTextReadMoreText);
         readMore.appendChild(smallTextReadMore);
         smallTextReadMore.insertAdjacentHTML('afterend', '<svg xmlns="http://www.w3.org/2000/svg" width="6" height="11" viewBox="0 0 6 11" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M5.35226 5.95956L1.10962 10.2022C0.855779 10.456 0.444221 10.456 0.190381 10.2022C-0.0634601 9.94836 -0.0634603 9.5368 0.190381 9.28296L3.9734 5.49994L0.190381 1.71692C-0.0634603 1.46308 -0.0634601 1.05152 0.190381 0.79768C0.444221 0.54384 0.855779 0.543839 1.10962 0.797681L5.35226 5.04032C5.6061 5.29416 5.6061 5.70572 5.35226 5.95956Z" fill="currentColor"/></svg>');
@@ -470,7 +450,6 @@ function addInfoCard(actorId, actorName, actorPlaying, actorImageUrl, actorBio, 
         productionsContainer.classList.add('productions-container');
         // for each display production 
         for (const displayProduction of displayProductions) {
-            console.log(displayProduction);
             // production
             const production = document.createElement('a');
             production.target = '_blank';
@@ -499,7 +478,7 @@ function addInfoCard(actorId, actorName, actorPlaying, actorImageUrl, actorBio, 
                 // this production is a tv show, so link the appropriate url
                 production.href = `https://www.themoviedb.org/tv/${displayProduction.id}`;
             } else {
-                // this production is a movie show, so link the appropriate url
+                // this production is a movie, so link the appropriate url
                 production.href = `https://www.themoviedb.org/movie/${displayProduction.id}`;
             }
             const smallTextProductionYear = document.createElement('div');
@@ -518,6 +497,20 @@ function addInfoCard(actorId, actorName, actorPlaying, actorImageUrl, actorBio, 
 
 }
 
+// creates and adds the face boxes
+function addFaceBox(faceBoxId, width, height, left, top) {
+    const videoContainer = document.getElementsByClassName('watch-video')[0];
+    const box = document.createElement('div');
+    box.style.width = `${width * window.innerWidth}px`;
+    box.style.height = `${height * window.innerHeight}px`;
+    box.style.left = `${left * window.innerWidth}px`;
+    box.style.top = `${top * window.innerHeight}px`;
+    box.classList.add('face-box');
+    box.id = faceBoxId;
+    videoContainer.appendChild(box);
+}
+
+
 // collapses all info cards to their initial state
 function setInfoCardsInitialState() {
 
@@ -535,21 +528,9 @@ function setInfoCardsInitialState() {
 }
 
 
-// add box over face
-function addFaceBox(faceBoxId, width, height, left, top) {
-    const videoContainer = document.getElementsByClassName('watch-video')[0];
-    const box = document.createElement('div');
-    box.style.width = `${width * window.innerWidth}px`;
-    box.style.height = `${height * window.innerHeight}px`;
-    box.style.left = `${left * window.innerWidth}px`;
-    box.style.top = `${top * window.innerHeight}px`;
-    box.classList.add('face-box');
-    box.id = faceBoxId;
-    videoContainer.appendChild(box);
-}
-
-
-// Backtracker
+////////////////////////////////////////////////////
+// PLACE CARDS (BACKTRACKING)
+////////////////////////////////////////////////////
 
 // Wrapper function for placeCards
 // Defines all required variables
@@ -570,12 +551,12 @@ function placeCardsWrapper(safeArea) {
 
     };
 
-    console.log('constData:', constData);
+    // console.log('constData:', constData);
 
     // define an array of the unplaced info cards
     const unplacedInfoCards = getUnplacedInfoCards();
 
-    console.log('unplacedInfoCards:', unplacedInfoCards);
+    // console.log('unplacedInfoCards:', unplacedInfoCards);
 
     // define an array of the placed info cards
     // initially no info cards are placed
@@ -605,12 +586,11 @@ function placeCards(constData, unplacedInfoCards, placedInfoCards, heuristicPlac
     // still cards to be placed
 
     const tryCard = unplacedInfoCards[unplacedInfoCards.length-1];
-    // console.log('start', JSON.stringify(tryCard));
 
     // loop through the possible placements
     for (const placement of ['right', 'left', 'above', 'below']) {
 
-        console.log(placement);
+        // console.log(placement);
 
         // check if can place the card given the already placed cards
         if (canPlaceThisCard(tryCard, placement, placedInfoCards, constData)) {
@@ -628,8 +608,8 @@ function placeCards(constData, unplacedInfoCards, placedInfoCards, heuristicPlac
                 heuristicPlacements.push(...structuredClone(placedInfoCards));
             }
 
-            console.log('placedInfoCards', JSON.stringify(placedInfoCards));
-            console.log('heuristicPlacements', JSON.stringify(heuristicPlacements));
+            // console.log('placedInfoCards', JSON.stringify(placedInfoCards));
+            // console.log('heuristicPlacements', JSON.stringify(heuristicPlacements));
         
             // recursively try to solve from this state
             const solution = placeCards(constData, unplacedInfoCards, placedInfoCards, heuristicPlacements);
@@ -650,7 +630,9 @@ function placeCards(constData, unplacedInfoCards, placedInfoCards, heuristicPlac
 }
 
 
-// Backtracker Helper Functions
+////////////////////////////////////////////////////
+// PLACE CARDS (BACKTRACKING) HELPER FUNCTIONS
+////////////////////////////////////////////////////
 
 // Returns an object of the face's id mapped to its bounding rect
 function getFaceRects() {
@@ -675,12 +657,10 @@ function getUnplacedInfoCards() {
 
 // Legality checker for the backtracking
 function canPlaceThisCard(tryCard, placement, placedInfoCards, constData) {
-
-    console.log('backdrop', constData.backdrop);
     
     // temporarily place tryCard
     placeThisCard(tryCard, placement, constData);
-    console.log('after placement, in check func', JSON.stringify(tryCard));
+    // console.log('after placement, in check func', JSON.stringify(tryCard));
 
     const tryCardRect = tryCard[Object.keys(tryCard)[0]];
     // console.log('checker -- tryCardRect', tryCardRect);
@@ -693,7 +673,7 @@ function canPlaceThisCard(tryCard, placement, placedInfoCards, constData) {
             tryCardRect.bottom + constData.gap > faceRect.top + 1 && faceRect.bottom + constData.gap > tryCardRect.top + 1) {
                 // faceRect and tryCard intersect
                 undoTempPlacement(tryCard);
-                console.log('  undid temp placement, faceRect intersection');
+                // console.log('  undid temp placement, faceRect intersection');
                 return false;
             }
     }
@@ -706,7 +686,7 @@ function canPlaceThisCard(tryCard, placement, placedInfoCards, constData) {
             tryCardRect.bottom + constData.gap > infoCardRect.top + 1 && infoCardRect.bottom + constData.gap > tryCardRect.top + 1) {
                 // infoCard and tryCard intersect
                 undoTempPlacement(tryCard);
-                console.log('  undid temp placement, intersection with another card');
+                // console.log('  undid temp placement, intersection with another card');
                 return false;
             }
     }
@@ -716,14 +696,13 @@ function canPlaceThisCard(tryCard, placement, placedInfoCards, constData) {
         tryCardRect.top < constData.backdrop.top + constData.margin || tryCardRect.bottom + constData.margin > constData.backdrop.bottom) {
             // tryCard goes off the screen
             undoTempPlacement(tryCard);
-            console.log('  constData.margin', JSON.stringify(constData.margin), 'tryCardRect.top', JSON.stringify(tryCardRect.top), 'constData.backdrop.top', JSON.stringify(constData.backdrop.top));
-            console.log('  undid temp placement, off the screen');
+            // console.log('  undid temp placement, off the screen');
             return false;
         }
     
     // everything is legal
     undoTempPlacement(tryCard);
-    console.log('  undid temp placement');
+    // console.log('  undid temp placement');
     return true;
 }
 
@@ -746,7 +725,7 @@ function placeThisCard(tryCard, placement, constData) {
             tryCardBackground.style.top = `${matchingFaceRect.top}px`;
             tryCardContent.style.left = tryCardBackground.style.left;
             tryCardContent.style.top = tryCardBackground.style.top;
-            console.log(`  placed ${tryCardId} ${placement} to ${faceId}`);
+            // console.log(`  placed ${tryCardId} ${placement} to ${faceId}`);
             break;
         
         case 'left':
@@ -754,7 +733,7 @@ function placeThisCard(tryCard, placement, constData) {
             tryCardBackground.style.top = `${matchingFaceRect.top}px`;
             tryCardContent.style.left = tryCardBackground.style.left;
             tryCardContent.style.top = tryCardBackground.style.top;
-            console.log(`  placed ${tryCardId} ${placement} to ${faceId}`);
+            // console.log(`  placed ${tryCardId} ${placement} to ${faceId}`);
             break;
                 
         case 'above':
@@ -762,7 +741,7 @@ function placeThisCard(tryCard, placement, constData) {
             tryCardBackground.style.top = `${matchingFaceRect.top - constData.gap - constData.infoCardHeight}px`;
             tryCardContent.style.left = tryCardBackground.style.left;
             tryCardContent.style.top = tryCardBackground.style.top;
-            console.log(`  placed ${tryCardId} ${placement} to ${faceId}`);
+            // console.log(`  placed ${tryCardId} ${placement} to ${faceId}`);
             break;
                 
         case 'below':
@@ -770,7 +749,7 @@ function placeThisCard(tryCard, placement, constData) {
             tryCardBackground.style.top = `${matchingFaceRect.bottom + constData.gap}px`;
             tryCardContent.style.left = tryCardBackground.style.left;
             tryCardContent.style.top = tryCardBackground.style.top;
-            console.log(`  placed ${tryCardId} ${placement} to ${faceId}`);
+            // console.log(`  placed ${tryCardId} ${placement} to ${faceId}`);
             break;
             
     }
@@ -786,18 +765,18 @@ function placeThisCard(tryCard, placement, constData) {
         'height': constData.infoCardHeight,
         'bottom': Number((document.getElementById(tryCardId + '-infoCardBackground').style.top).slice(0, -2)) + constData.infoCardHeight
     };
-    console.log('try card in place func after update', JSON.stringify(tryCard));
+    // console.log('try card in place func after update', JSON.stringify(tryCard));
 
 }
 
 // Undo temp info card placement by removing left and top style properties
 function undoTempPlacement(tryCard) {
 
-    // get tryCard as an HTML element
-    const tryCardId = Object.keys(tryCard)[0];
     // get tryCard background and content HTML elements
+    const tryCardId = Object.keys(tryCard)[0];
     tryCardBackground = document.getElementById(tryCardId + '-infoCardBackground');
     tryCardContent = document.getElementById(tryCardId + '-infoCardContent');
+
     tryCardBackground.style.removeProperty('left');
     tryCardBackground.style.removeProperty('top');
     tryCardContent.style.removeProperty('left');
@@ -805,13 +784,18 @@ function undoTempPlacement(tryCard) {
 
 }
 
+
+////////////////////////////////////////////////////
+// OTHER FUNCTIONS
+////////////////////////////////////////////////////
+
 // Place the cards in heuristicPlacements
 function placeHeuristically(heuristicPlacements, unplacedInfoCards, placedInfoCards) {
 
     // loop through the array
     for (const card of heuristicPlacements) {
 
-        console.log('card in heuristic:', card);
+        // console.log('card in heuristic:', card);
 
         // get card id
         const cardId = Object.keys(card)[0]
@@ -847,7 +831,28 @@ function placeHeuristically(heuristicPlacements, unplacedInfoCards, placedInfoCa
 
     }
 
-    console.log('placed heuristically');
+    // console.log('placed heuristically');
 
 }
+
+// Removes all face boxes and info cards on screen (called by play/pause observer)
+function removeAllPlacedElements() {
+
+    // face boxes
+    while (document.getElementsByClassName('face-box').length > 0) {
+        document.getElementsByClassName('face-box')[0].remove();
+    }
+
+    // info card background
+    while (document.getElementsByClassName('info-card-background').length > 0) {
+        document.getElementsByClassName('info-card-background')[0].remove();
+    }
+
+    // info card content
+    while (document.getElementsByClassName('info-card-content').length > 0) {
+        document.getElementsByClassName('info-card-content')[0].remove();
+    }
+
+}
+
 
