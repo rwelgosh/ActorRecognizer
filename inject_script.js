@@ -70,6 +70,20 @@ const ageAdvisorObserver = new MutationObserver(mutationList => {
 
 ageAdvisorObserver.observe(document.getElementsByClassName('watch-video')[0], { subtree: true, childList: true });
 
+// detect and hide subtitles when paused
+const subtitlesObserver = new MutationObserver(mutationList => {
+    mutationList.forEach(mutation => {
+        if (isVideoPaused) {
+            document.getElementsByClassName('player-timedtext')[0].style.display = 'none';
+        }
+    });    
+});
+
+// wait 2 seconds for subtitles to load before we try to access them
+setTimeout(() => {
+    subtitlesObserver.observe(document.getElementsByClassName('player-timedtext')[0], { attributes : true, attributeFilter : ['style'] });
+}, 2000);
+
 
 ////////////////////////////////////////////////////
 // FACIAL RECOGNITION DATA RECEIVED, TRIGGER UI CODE
