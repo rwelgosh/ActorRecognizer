@@ -30,9 +30,8 @@ const playPauseObserver = new MutationObserver(mutationList => {
             else if (addedNode.classList.contains('playback-notification--pause')) {
                 isVideoPaused = true;
                 // console.log('paused');
-                // hide caption text when paused
-                const captionText = document.getElementsByClassName('player-timedtext')[0];
-                captionText.style.display = 'none';
+                // hide subtitles when paused
+                document.getElementsByClassName('player-timedtext')[0].style.display = 'none';
                 // grab current production title
                 thisProductionTitle = document.querySelector('h4').innerHTML;
             }
