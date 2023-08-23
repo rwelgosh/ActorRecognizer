@@ -33,7 +33,12 @@ const playPauseObserver = new MutationObserver(mutationList => {
                 // hide subtitles when paused
                 document.getElementsByClassName('player-timedtext')[0].style.display = 'none';
                 // grab current production title
-                thisProductionTitle = document.querySelector('h4').innerHTML;
+                if (document.querySelector('h4').innerHTML === undefined || document.querySelector('h4').innerHTML === 'General Description') {
+                    thisProductionTitle = document.querySelectorAll('[data-uia="video-title"]')[0].innerHTML;
+                } else {
+                    thisProductionTitle = document.querySelector('h4').innerHTML;
+
+                }
             }
         });
     });
@@ -78,10 +83,10 @@ const subtitlesObserver = new MutationObserver(mutationList => {
     });    
 });
 
-// wait 2 seconds for subtitles to load before we try to access them
+// wait 3 seconds for subtitles to load before we try to access them
 setTimeout(() => {
     subtitlesObserver.observe(document.getElementsByClassName('player-timedtext')[0], { attributes : true, attributeFilter : ['style'] });
-}, 2000);
+}, 3000);
 
 
 ////////////////////////////////////////////////////
