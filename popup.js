@@ -2,6 +2,9 @@ const btn = document.querySelector("button");
 
 btn.addEventListener("click", function() {
 
+    btn.classList.add('loading');
+    btn.innerHTML = '<div class="loader"></div>Loading'
+
     chrome.runtime.sendMessage({status: "get data"}, (response) => {
         if (response.message === "WORKED") {
             (async () => {
@@ -16,10 +19,12 @@ btn.addEventListener("click", function() {
                             chrome.tabs.query({active: true, lastFocusedWindow: true}, (tabs) => {
                                 chrome.tabs.sendMessage(tabs[0].id, {status: "actor data", data: v}, (response) => {
                                     if (response.paused === true) {
-                                        //Put funcitonality in here to edit the styling of popup.js
-                                        
+                                        // success
+                                        window.close(); // close popup
+                                    } else {
+
                                     }
-                                    console.log(response.message);
+                                    // console.log(response.message);
                                 });
                             });
                         }
