@@ -61,16 +61,16 @@ function recognize_celebrities(image) {
 //Provides anonymous log on to AWS services
 function AnonLog() {
 
-// Initialize the Amazon Cognito credentials provider
-AWS.config.region = 'us-east-2'; // Region
-AWS.config.credentials = new AWS.CognitoIdentityCredentials({
-    IdentityPoolId: 'us-east-2:10a8729f-c596-4908-a749-25ffffcb0cee',
-});
-// Make the call to obtain credentials
-AWS.config.credentials.get(function () {
-    // Credentials will be available when this function is called.
-    var accessKeyId = AWS.config.credentials.accessKeyId;
-    var secretAccessKey = AWS.config.credentials.secretAccessKey;
-    var sessionToken = AWS.config.credentials.sessionToken;
-});
+    // Initialize the Amazon Cognito credentials provider
+    AWS.config.region = 'us-east-2'; // Region
+    AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+        IdentityPoolId: 'us-east-2:10a8729f-c596-4908-a749-25ffffcb0cee',
+    });
+    // Make the call to obtain credentials
+    AWS.config.credentials.get(function () {
+        // Credentials will be available when this function is called.
+        var accessKeyId = AWS.config.credentials.accessKeyId;
+        var secretAccessKey = AWS.config.credentials.secretAccessKey;
+        var sessionToken = AWS.config.credentials.sessionToken;
+    });
 }

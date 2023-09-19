@@ -31,5 +31,8 @@
       "run_at": "document_end"
     }
   ],
-  "host_permissions": [ "<all_urls>" ]
+  "host_permissions": [ 
+    "https://www.netflix.com/watch/*",
+    "http://www.netflix.com/watch/*" 
+  ]
 }

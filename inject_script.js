@@ -25,7 +25,7 @@ const playPauseObserver = new MutationObserver(mutationList => {
                 isVideoPaused = false;
                 // console.log('played');
                 // remove info cards and face boxes on screen
-                removeAllPlacedElements();
+                removeAllPlacedElements();    
             }
             else if (addedNode.classList.contains('playback-notification--pause')) {
                 isVideoPaused = true;
@@ -37,7 +37,6 @@ const playPauseObserver = new MutationObserver(mutationList => {
                     thisProductionTitle = document.querySelectorAll('[data-uia="video-title"]')[0].innerHTML;
                 } else {
                     thisProductionTitle = document.querySelector('h4').innerHTML;
-
                 }
             }
         });
@@ -106,6 +105,8 @@ chrome.runtime.onMessage.addListener(
                 }
                 identifiedActors.push(actorName);
             }
+            
+
             // console.log(identifiedActors);
             // get safeArea
             const videoContainer = document.getElementsByClassName('watch-video')[0].getBoundingClientRect();
@@ -232,7 +233,7 @@ async function getActorBio(actorId, page=1) {
     } catch (error) {}
     // console.log('bio data', data);
     // get the first 222 characters
-    const length = 206;
+    const length = 234;
     const displayBio = data.biography.slice(0, length+1) + '...';
     return displayBio;
 }
