@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Actordentify",
   "version": "1.0",
-  "description": "An extension to ",
+  "description": "An extension for Netflix to overlay information about the actors on screen.",
   "icons": {
     "16": "icon16.png",
     "32": "icon32.png",
