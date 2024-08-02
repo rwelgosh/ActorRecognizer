@@ -5,4 +5,4 @@
 
 Learn more about how it works [here](https://alenius.io/actordentify)!
 
-![Overlaying actor information]([https://alenius.io/actordentify/opengraph-image.jpg])
+![Overlaying actor information](https://alenius.io/actordentify/opengraph-image.jpg)
